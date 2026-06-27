@@ -1,6 +1,9 @@
 import json
 import logging
 
+from botocore.exceptions import BotoCoreError, ClientError
+from fastapi import HTTPException
+
 from app.dependencies.bedrock import get_bedrock_client
 from app.prompts.guardrails import GUARDRAIL_PROHIBITED_PROMPT
 
@@ -25,12 +28,15 @@ def run_query_guardrails(query: str) -> bool:
         query=query,
     )
 
-    response = client.invoke_model(
-        modelId=_MODEL_ID,
-        body=json.dumps({"prompt": prompt, "max_gen_len": 10, "temperature": 0.0}),
-        contentType="application/json",
-        accept="application/json",
-    )
+    try:
+        response = client.invoke_model(
+            modelId=_MODEL_ID,
+            body=json.dumps({"prompt": prompt, "max_gen_len": 10, "temperature": 0.0}),
+            contentType="application/json",
+            accept="application/json",
+        )
+    except (BotoCoreError, ClientError) as e:
+        raise HTTPException(status_code=502, detail="Upstream model call failed.") from e
 
     result = json.loads(response["body"].read())
     verdict = result.get("generation", "PROHIBITED").strip().upper()
