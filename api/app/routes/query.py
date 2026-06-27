@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.prompts.synthesis import SYSTEM_SYNTHESIS_TEMPLATE
 from app.dependencies.bedrock import get_bedrock_client
 from app.dependencies.chroma import get_chroma_client
 from app.functions.embeddings import embed_text
@@ -29,20 +30,18 @@ class QueryResponse(BaseModel):
 def _synthesize(question: str, context_chunks: list[str]) -> str:
     client = get_bedrock_client()
     context = "\n\n".join(context_chunks)
+    system_instruction = SYSTEM_SYNTHESIS_TEMPLATE.format(context=context)
+    
     response = client.invoke_model(
         modelId=_SYNTHESIS_MODEL_ID,
         body=json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 1024,
+            "system": system_instruction,
             "messages": [
                 {
                     "role": "user",
-                    "content": (
-                        "You are a helpful Cadre AI assistant. "
-                        "Answer the question using only the context below.\n\n"
-                        f"Context:\n{context}\n\n"
-                        f"Question: {question}"
-                    ),
+                    "content": f"Question: {question}"
                 }
             ],
         }),
@@ -67,8 +66,10 @@ def query(request: QueryRequest):
     query_embedding = embed_text(request.question)
     results = collection.query(query_embeddings=[query_embedding], n_results=_TOP_K)
 
+    assert results["documents"] and results["metadatas"] is not None
+
     context_chunks = results["documents"][0]
-    sources = [m["title"] for m in results["metadatas"][0]]
+    sources = [m["title"] for m in results["metadatas"][0]] 
 
     answer = _synthesize(request.question, context_chunks)
-    return QueryResponse(answer=answer, sources=sources)
+    return QueryResponse(answer=answer, sources=sources) # type: ignore
