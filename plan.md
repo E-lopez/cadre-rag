@@ -76,9 +76,20 @@ To stop the AI from getting confused or reading files it shouldn't be touching, 
     `ui/src/components/SourceTags.tsx` - Renders lists of reference files or text chunks mapped from the API data array.
     `ui/src/App.tsx` - Application bootstrap container that hosts layout components and fires the on-mount index generation script.
 
-### Phase 3: Guardrailing and Evals
+### Phase 3: Evals
+*Goal: Implement automated asynchronous evaluation of the RAG pipeline output*
+- [ ] **Milestone 1: LLM-as-a-Judge Evaluation Engine**
+  * **Setup Evaluation Hook:**
+    - Implement an execution interceptor wrapped around the `POST /v1/query` endpoint handler, utilizing a background task pattern (`fastapi.BackgroundTasks`) to prevent adding latency to the main user response loop.
+  * **Configure LLMaaJ Engine:**
+    - Inject the structured RAG Triad evaluation prompt matrix to run via the active AWS Bedrock `boto3` client container.
+    - Use `prompts/judge`as the system prompt and nothing else
+    - Use the same model than the generation phase is using
+  * **Parallel Execution & Logging:**
+    - Pass the captured runtime payload (`user_query`, `retrieved_context`, and final `generated_response`) into a non-blocking background worker thread immediately after response generation.
+    - Parse the evaluator's JSON verdict and pipeline metrics directly into your application's structured `logging` system for downstream monitoring and performance metrics tracking.
 
-### Phase 4: 
+### Phase 4: Fine Tunning
 
 ---
 

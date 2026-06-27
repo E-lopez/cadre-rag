@@ -37,7 +37,7 @@ export default function SearchForm() {
         disabled={state.loading || !question.trim()}
         className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {state.loading ? 'Searching…' : 'Search'}
+        Search
       </button>
     </form>
   )

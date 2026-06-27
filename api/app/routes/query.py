@@ -2,13 +2,14 @@ import json
 import logging
 
 from botocore.exceptions import BotoCoreError, ClientError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 from app.prompts.synthesis import SYSTEM_SYNTHESIS_TEMPLATE
 from app.dependencies.bedrock import get_bedrock_client
 from app.dependencies.chroma import ChromaCollectionDep, get_chroma_client
 from app.functions.embeddings import embed_text
+from app.services.evals import run_rag_eval
 from app.services.guardrails import run_query_guardrails
 
 router = APIRouter()
@@ -57,7 +58,7 @@ def _synthesize(question: str, context_chunks: list[str]) -> str:
 
 
 @router.post("/query", response_model=QueryResponse)
-def query(request: QueryRequest, collection: ChromaCollectionDep):
+def query(request: QueryRequest, background_tasks: BackgroundTasks, collection: ChromaCollectionDep):
     if not run_query_guardrails(request.question):
         raise HTTPException(status_code=403, detail="Query contains prohibited content.")
 
@@ -77,4 +78,12 @@ def query(request: QueryRequest, collection: ChromaCollectionDep):
     sources = [m["title"] for m in results["metadatas"][0]] 
 
     answer = _synthesize(request.question, context_chunks)
+
+    background_tasks.add_task(
+        run_rag_eval,
+        user_query=request.question,
+        retrieved_context="\n\n".join(context_chunks)[:1000],  # Limit context length for eval
+        generated_response=answer,
+    )
+
     return QueryResponse(answer=answer, sources=sources) # type: ignore
