@@ -29,7 +29,7 @@ To stop the AI from getting confused or reading files it shouldn't be touching, 
 - [ ] **Milestone 3: Core API**
   * **Endpoints to Build:**
     - GET `/health` -> Simple uptime status check.
-    - POST `/v1/create-index` -> Reads and indexes the raw JSON data located at `api/data/cadre_kb.json`.
+    - POST `/v1/create-index` -> Reads and indexes the raw JSON data located at `api/app/data/cadre_kb.json`.
     - POST `/v1/query` -> Accepts a question, uses `run_query_guardrails()`to identify restricted questions in it, if the returned value is `ALLOWED` then it embeds it via Bedrock Titan, searches ChromaDB using cosine similarity, and synthesizes a response using Claude Sonnet 4.6.
   * **Context Boundary:** All changes isolated inside `api/app/`.
 
@@ -37,9 +37,9 @@ To stop the AI from getting confused or reading files it shouldn't be touching, 
     `app/main.py` - Application entry point and router inclusion, includes GET /health endpoint.
     `app/dependencies/bedrock.py` - Independent AWS Bedrock client initialization using boto3.
     `app/dependencies/chroma.py` - Independent in-memory ChromaDB EphemeralClient initialization.
-    `app/routes/query.py` - POST /v1/query endpoint with the guardrail logic wrapper. This endpoint will use the 'prohibited topics guardrail' as defined by `GUARDRAIL_PROHIBITED_PROMPT` from `app/prompts/guardrails.py` to model `meta.llama3-8b-instruct-v1:0`.
+    `app/routes/query.py` - POST /v1/query endpoint with the guardrail logic wrapper. This endpoint will use the 'prohibited topics guardrail' as defined by `GUARDRAIL_PROHIBITED_PROMPT` from `app/functions/prompts.py` to model `meta.llama3-8b-instruct-v1:0`.
     `app/routes/index.py` - POST /v1/create-index endpoint.
-    `app/prompts/guardrails.py` - Llama 3 guardrail prompt constants.
+    `app/prompts/prompts.py` - Llama 3 guardrail prompt constants.
 
 ### Phase 2: Ui setup
 
