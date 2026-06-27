@@ -30,3 +30,4 @@ Run these commands from inside this subdirectory:
 ## Custom Commands
 - `/test-api`: `pytest`
 - `/test-endpoint`: `pytest tests/test_endpoints.py`
+- `run-api`: `uvicorn app.main:app --app-dir api --reload`
