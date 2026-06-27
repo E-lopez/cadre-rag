@@ -3,6 +3,7 @@ import { AppStateProvider, useAppState } from './context/AppStateContext'
 import SearchForm from './components/SearchForm'
 import ResponseDisplay from './components/ResponseDisplay'
 import { createIndex } from './services/api'
+import LoadingIndicator from './components/LoadingIndicator'
 
 function AppContent() {
   const { dispatch } = useAppState()
@@ -32,6 +33,7 @@ function AppContent() {
       </div>
       <SearchForm />
       <ResponseDisplay />
+      <LoadingIndicator />
     </div>
   )
 }
